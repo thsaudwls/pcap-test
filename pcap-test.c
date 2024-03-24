@@ -35,12 +35,16 @@ int ethernet_header(const u_char* packet) {
 
 int ip_header(const u_char* packet) {
 	struct libnet_ipv4_hdr* ip_hdr = (struct libnet_ipv4_hdr*)(packet);
+	if(ip_hdr->ip_p != 6) {
+		printf("This packet is not TCP packet\n");
+		return 0;
+	}
 	uint32_t ip_src_ori = ntohl(ip_hdr->ip_src.s_addr);
 	uint32_t ip_dst_ori = ntohl(ip_hdr->ip_dst.s_addr);
 	printf("============IP Header============\n");
 	printf("src ip : %d.%d.%d.%d\n", (ip_src_ori >> 24) & 0xFF, (ip_src_ori >> 16) & 0xFF, (ip_src_ori >> 8) & 0xFF, ip_src_ori & 0xFF);
 	printf("dst ip : %d.%d.%d.%d\n", (ip_dst_ori >> 24) & 0xFF, (ip_dst_ori >> 16) & 0xFF, (ip_dst_ori >> 8) & 0xFF, ip_dst_ori & 0xFF);
-	return ip_hdr->ip_hl * 4;
+	return 20;
 }
 
 int tcp_header(const u_char* packet) {
@@ -77,7 +81,11 @@ int main(int argc, char* argv[]) {
 		// IP Header의 src ip / dst ip
 		offset += ip_header(packet + offset);
 		// TCP Header의 src port / dst port
+		if (offset != 34)
+			continue;
 		offset += tcp_header(packet + offset);
+
+		printf("offset : %d\n", offset - 34);
 		// Payload(Data)의 hexadecimal value(최대 20바이트까지만)
 		printf("=========Payload(Data)=========\n");
 		for (int i = 0; i < 20; i++) {
